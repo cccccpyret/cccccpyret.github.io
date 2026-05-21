@@ -1,0 +1,180 @@
+[gd_scene format=3 uid="uid://boikk5yx1v0p8"]
+
+[ext_resource type="Texture2D" uid="uid://dkp8quv8lc6dh" path="res://scene1bg.JPG" id="1_1rf3o"]
+[ext_resource type="FontFile" uid="uid://btyu2rkagolfe" path="res://textfont.ttf" id="2_ge44t"]
+
+[sub_resource type="GDScript" id="GDScript_1rf3o"]
+script/source = "extends Control
+
+@onready var line1 = $Line1
+@onready var line2 = $Line2
+@onready var line3 = $Line3
+@onready var fade_overlay = $FadeOverlay
+
+var is_typing = true
+var typing_speed = 0.05  # seconds per character
+var line_pause = 1.0  # pause after line finishes typing before it disappears
+var fade_pause = 0.5  # pause after line disappears before next line starts
+var final_pause = 2.0  # pause after last line before transitioning
+var fade_duration = 1.0  # how long the fade to black takes
+
+# Store the full text for each line
+var line_texts = []
+
+func _ready():
+	# Store original text and clear labels
+	line_texts = [
+		line1.text,
+		line2.text,
+		line3.text,
+	]
+	
+	# Clear all text and hide lines
+	line1.text = \"\"
+	line2.text = \"\"
+	line3.text = \"\"
+	
+	line1.visible = false
+	line2.visible = false
+	line3.visible = false
+	
+	# Make sure fade overlay starts transparent
+	fade_overlay.modulate.a = 0
+	
+	# Start typing animation
+	start_dialogue()
+
+func start_dialogue():
+	# Line 1: type, pause, hide
+	await type_line(line1, line_texts[0])
+	await get_tree().create_timer(line_pause).timeout
+	line1.visible = false
+	await get_tree().create_timer(fade_pause).timeout
+	
+	# Line 2: type, pause, hide
+	await type_line(line2, line_texts[1])
+	await get_tree().create_timer(line_pause).timeout
+	line2.visible = false
+	await get_tree().create_timer(fade_pause).timeout
+	
+	# Line 3: type, pause
+	await type_line(line3, line_texts[2])
+	await get_tree().create_timer(final_pause).timeout
+	
+	# Fade to black
+	await fade_to_black()
+	
+	# Transition to main game
+	print(\"Transitioning to main game\")
+	get_tree().change_scene_to_file(\"res://main_game.tscn\")
+
+func fade_to_black():
+	var tween = create_tween()
+	tween.tween_property(fade_overlay, \"modulate:a\", 1.0, fade_duration)
+	await tween.finished
+
+func type_line(label: Label, full_text: String):
+	is_typing = true
+	label.visible = true
+	label.text = \"\"
+	
+	for i in range(full_text.length()):
+		if not is_typing:  # Skip to end if player clicked
+			label.text = full_text
+			return
+		label.text += full_text[i]
+		await get_tree().create_timer(typing_speed).timeout
+	
+	is_typing = false
+
+func _input(event):
+	# Allow player to skip typing animation
+	if event is InputEventMouseButton and event.pressed:
+		if is_typing:
+			is_typing = false  # Skip to end of current line
+"
+
+[node name="Scene1Intro" type="Control" unique_id=1827774643]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = SubResource("GDScript_1rf3o")
+
+[node name="Background" type="Sprite2D" parent="." unique_id=1527423424]
+position = Vector2(575.75, 322.5)
+scale = Vector2(0.96288574, 0.7747641)
+texture = ExtResource("1_1rf3o")
+
+[node name="Line1" type="Label" parent="." unique_id=971286710]
+visible = false
+layout_mode = 1
+anchors_preset = -1
+anchor_left = 0.5
+anchor_top = 0.437
+anchor_right = 0.5
+anchor_bottom = 0.437
+offset_left = -530.0
+offset_top = 289.824
+offset_right = -158.0
+offset_bottom = 329.824
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_fonts/font = ExtResource("2_ge44t")
+theme_override_font_sizes/font_size = 24
+text = "You: Gosh, where am I?"
+horizontal_alignment = 1
+
+[node name="Line2" type="Label" parent="." unique_id=1371072632]
+visible = false
+layout_mode = 1
+anchors_preset = -1
+anchor_left = 0.5
+anchor_top = 0.39800003
+anchor_right = 0.5
+anchor_bottom = 0.39800003
+offset_left = -476.0
+offset_top = 314.09598
+offset_right = -12.0
+offset_bottom = 354.09598
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_fonts/font = ExtResource("2_ge44t")
+theme_override_font_sizes/font_size = 24
+text = "It's so dark... looks a bit abandoned as well."
+horizontal_alignment = 1
+
+[node name="Line3" type="Label" parent="." unique_id=101034456]
+visible = false
+layout_mode = 1
+anchors_preset = -1
+anchor_left = 0.5
+anchor_top = 0.39800003
+anchor_right = 0.5
+anchor_bottom = 0.39800003
+offset_left = -495.0
+offset_top = 314.09598
+offset_right = -31.0
+offset_bottom = 354.09598
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_fonts/font = ExtResource("2_ge44t")
+theme_override_font_sizes/font_size = 24
+text = "Whatever, as long as my sister is here..."
+horizontal_alignment = 1
+
+[node name="FadeOverlay" type="ColorRect" parent="." unique_id=955626155]
+modulate = Color(1, 1, 1, 0)
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+color = Color(0, 0, 0, 1)
